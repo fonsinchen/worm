@@ -1,0 +1,54 @@
+wORM
+----
+
+1. SQL is nasty
+---------------
+
+a, Commonly for accessing a database you'd use SQL to interact with the data. Most RDMSs have their own dialects of SQL. This is the first part of the problem. In order to support multiple different RDMSs you need to write different SQL statements for the same tasks.
+b, SQL statements don't integrate very well with the surrounding language. Usually you pass them as strings to the query methods. This has two drawbacks. First, if you have a syntax error in your SQL string you won't see it until it's executed. Your editor typically doesn't recognize strings as SQL statements and thus can't syntax-highlight them or warn about any problems. Even if it does it doesn't help a lot. SQL statements are often constructed by concatenating fragments of statements. This means each of those fragments is syntactically incorrect when the editor sees it. Mixing two languages in one file creates a "messy" appearance of the resulting code, making it harder to read and to understand.
+c, SQL only provides flat results. Each row of the result set is typically represented as an Array of Dictionary type object in the programming language being used. No matter how many tables you have joined the result is always flat. In order to represent many-to-one relationships as nested objects or arrays you have to parse the result and restructure it or you have to execute multiple queries to fetch different parts of the desired structure.
+
+2. ORMs are too heavy
+---------------------
+
+These problems have typically been resolved by using Object-Relational-Mapping (ORM). An ORM abstracts away the intricacies of SQL and provides a unified query API. It hydrates structured results from flat SQL result sets and if it's good it does all that without inventing yet another query language to passed around in strings.
+However, usually the abstraction layer is too high and creates too much overhead. Let me show that with an example. I have that complicated table structure involving accounts, associated posts and comments to those posts. Each table has lots of fields I'm not interested in right now and especially "account" has a field "password" which I don't want to see retrieved anywhere. What I want is a simple object which encompasses:
+
+a, The name of account 12455
+b, The titles and texts of posts associated with that account
+c, The texts of comments associated with those posts
+
+This should all be structured as nested objects. All I want to do with it is JSON-encode it and send it over the wire to mister 12455 who wants to see his posts. Now I put my ORM to work. I tell it "fetch account 12455", then getPosts(), then for each post getComments(). Now that is a naive way of doing it. Some ORMs provide the ability to pre-join the tables but as ORMs try to hide the actual going ons on the database level "normal" users wouldn't know that. So the ORM happily sends some 50 queries to the RDMS, one for each post and comment. Then it hydrates objects from the result sets, outfitting them with methods to change fields, update or insert rows, add and remove related objects, populate relations from the database and typically a lot of other things. 
+After the ORM is done with that and presents me a nice object I need to throw out the things I don't want to see. So I recursively loop over all those Posts and Comments and create another nested object structure with the things I actually need. The result I pass to the json encoder output it and then I throw away all those beautifully crafted objects with all their methods and data duplication.
+
+3. wORM, the "shallow ORM"
+--------------------------
+
+So, the question is: Can I a query and "field selection/transformation" API which:
+
+a, Doesn't require me to write SQL (or any query language)
+b, Can select from multiple tables at once by joining
+c, Allows me to specify fields I want to see and possibly simple transformations like renaming, shortening, JSON-decoding
+d, Gives me structured results
+e, Avoids most of the hydration overhead
+
+Let's have a look at how I dealt with account-post-comment problem in the end. I created a "serializer" class which would take a "serialize descriptor" like the following and extract the respective fields from the ORM (propel in this case) query result:
+
+array(
+  'Account',
+  'Posts' => array(
+    'Title',
+    'Text',
+    'Comments' => array(
+      'Text'
+    )
+  )
+)
+
+That syntax probably only works in PHP. The result would be a nested array which could easily be passed to json_encode. That got me thinking: If I rewrite the query mechanism I can pass that descriptor right into the query and the code would already know:
+
+a, Which fields to select
+b, Which tables to join
+c, What structure to return
+
+This would save a lot of overhead.
