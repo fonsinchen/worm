@@ -1,3 +1,18 @@
+{
+    var exprjoin = function(e) {
+        if (e[1].length === 1) {
+            return e[1][0];
+        }
+        console.log(e);
+        var result = [e[1][0]];
+        var second = [];
+        for (var i = 1; i < e[1].length; ++i) {
+            Array.prototype.push.apply(result, e[1][i][0]);
+        }
+        return (result.length === 1 ? result[0] : result);
+    };
+}
+
 // Parser for limited SQL expressions. Derived from sqld3
 
 start = expr
@@ -17,7 +32,9 @@ decimal_point = dot
 equal = '='
 star = '*'
 
-name = str: [A-Za-z][A-Za-z0-9_]* { return str.join('') }
+name = 
+        ( str: (([A-Za-z]) ([A-Za-z0-9_]*)) {return str[0] + str[1]}) 
+        / ( str: (('"') ([^"]+) ('"')) {return str[1] } )
 
 table_name = name
 column_name = name
@@ -33,7 +50,7 @@ CURRENT_TIME = 'now'
 CURRENT_DATE = 'now'
 CURRENT_TIMESTAMP = 'now'
 
-bind_parameter = '?' name
+bind_parameter = '?'
 
 NULL = whitespace1 "NULL"
 AND = whitespace1 "AND"
@@ -69,30 +86,19 @@ numeric_literal =
     return parseInt(x);
   }
 
+string_literal = "'" [^']* "'"
+
 signed_number =
   ( ( plus / minus )? numeric_literal )
 
 literal_value =
-  ( numeric_literal / NULL / CURRENT_TIME / CURRENT_DATE / CURRENT_TIMESTAMP )
+  ( numeric_literal / string_literal / NULL / CURRENT_TIME / CURRENT_DATE / CURRENT_TIMESTAMP )
 
 unary_operator =
   x: ( whitespace
        ( '-' / '+' / '~' / 'NOT') )
   { return x[1] }
 
-binary_operator =
-  x: ( whitespace
-       ('||'
-        / '*' / '/' / '%'
-        / '+' / '-'
-        / '<<' / '>>' / '&' / '|'
-        / '<=' / '>='
-        / '<' / '>'
-        / '=' / '==' / '!=' / '<>'
-        / 'IS' / 'IS NOT' / 'IN' / 'LIKE' / 'GLOB' / 'MATCH' / 'REGEXP'
-        / 'AND'
-        / 'OR') )
-  { return x[1] }
 
 call_function =
   ( function_name
@@ -115,19 +121,53 @@ value =
            { return { column: c } } )
        / ( unary_operator expr )
        / call_function
-       / ( whitespace lparen expr whitespace rparen )
+       / ( p: ( lparen expr whitespace rparen )
+           { return {braced : p[1]} } )
        / ( CAST lparen expr AS type_name rparen )
        / ( CASE expr ? ( WHEN expr THEN expr )+ ( ELSE expr )? END ) ) )
   { return v[1] }
 
+expr1 =
+    e: ( whitespace
+        ( value (
+            i: (whitespace ('*' / '/' / '%') value ) { return [i[1], i[2]] }
+        )* ) )
+  { return exprjoin(e) }
+
+expr2 =
+    e: ( whitespace
+        ( expr1 (
+            i: (whitespace ('+' / '-') expr1 ) { return [i[1], i[2]] }
+        )* ) )
+  { return  exprjoin(e) }
+
+expr3 =
+    e: ( whitespace
+        ( expr2 (
+            i: (whitespace ('<<' / '>>' / '&' / '|') expr2 ) { return [i[1], i[2]] }
+        )* ) )
+  { return  exprjoin(e) }
+
+expr4 =
+    e: ( whitespace
+        ( expr3 (
+            i: (whitespace ('<=' / '>=' / '<' / '>' / '=' / '==' / '!=' / '<>') expr3 ) { return [i[1], i[2]] }
+        )* ) )
+  { return  exprjoin(e) }
+
+expr5 = 
+    e: ( whitespace
+        ( expr4 (
+            i: (whitespace ('OR' / 'AND' / '||' / '&&') expr4 ) { return [i[1], i[2]] }
+        )* ) )
+  { return  exprjoin(e) }
+
 expr =
   e: ( whitespace
-       ( ( value binary_operator expr )
-       / ( value COLLATE collation_name )
-       / ( value NOT ? ( LIKE / GLOB / REGEXP / MATCH ) expr ( ESCAPE expr )? )
-       / ( value ( ISNULL / NOTNULL / ( NOT NULL ) ) )
-       / ( value IS NOT ? expr )
-       / ( value NOT ? BETWEEN expr AND expr )
-       / ( value NOT ? IN ( lparen ( expr comma )+ rparen )
-       / value ) ) )
+       ( ( expr5 COLLATE collation_name )
+       / ( expr5 NOT ? ( LIKE / GLOB / REGEXP / MATCH ) expr ( ESCAPE expr )? )
+       / ( expr5 ( ISNULL / NOTNULL / ( IS ? NOT NULL ) ) )
+       / ( expr5 NOT ? BETWEEN expr AND expr )
+       / ( expr5 NOT ? IN ( lparen ( expr comma )+ rparen )
+       / expr5 ) ) )
   { return e[1]; }
