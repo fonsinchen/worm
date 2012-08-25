@@ -1,33 +1,13 @@
 
-var driver = null;
-
-var worm = {
-    /**
-     * Select things from the database.
-     * @param table Main table to select from.
-     * @param criteria A criteria object to narrow the query (or null to select
-     *  everything).
-     * @param descriptor Nested object that describes what to select from the main
-     *  and possibly secondary tables and how to transform the result.
-     * @param callback Will be called with (err, result) for each object constructed
-     *  from a row of the main table.
-     */
-    "select" : function(table, criteria, descriptor, callback) {
-
-    },
-
-    "insert" : function(table, object, descriptor, callback) {
-
-    },
-
-    "update" : function(table, object, criteria, descriptor, callback) {
-
-    },
-
-    "delete" : function(table, criteria, descriptor, callback) {
-
-    }
+if (typeof Object.create !== 'function') {
+    Object.create = function (obj) {
+        var F = function() {};
+        F.prototype = obj;
+        return new F();
+    };
 }
+
+
 
 module.exports = function (driverName, options, callback) {
     if (arguments.length < 3) {
@@ -39,18 +19,33 @@ module.exports = function (driverName, options, callback) {
         require(require('path').join(__dirname, 'drivers', driverName))
                 .connect(options, function(err, d) {
             if (err) return callback(err);
-            driver = d;
+
+            // TODO: use Object.create and add the driver and the structure to it
+            var structure;
+            var worm = function(table, descriptor) {
+                return {
+                    where : function() {return this;},
+                    limit : function() {return this;},
+                    order : function() {return this;},
+                    select : function() {},
+                    insert : function() {},
+                    update : function() {},
+                    "delete" : function() {}
+                }
+            };
+
             if (options.structure === undefined) {
                 return require('db-meta').connect(driverName, {
                     connection : d.getConnection()
                 }, function(err, meta) {
-                    meta.collect(function(err, structure) {
+                    meta.collect(function(err, s) {
                         if (err) return callback(err);
-                        d.setStructure(structure);
+                        structure = s;
                         return callback(worm);
                     });
                 });
             } else {
+                structure = options.structure;
                 return callback(worm);
             }
         });
