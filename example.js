@@ -37,7 +37,7 @@ require('worm')('pg', {
     } else {
         var q = worm('fragment', {
             id:1, x:1, y:1
-        }).select(function(err, result) {
+        }).where("(x != 50) AND (x = y)").select(function(err, result) {
             if (err) console.log(err);
             console.log(result);
         });
