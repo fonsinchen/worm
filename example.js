@@ -1,4 +1,4 @@
-console.log('(x < ? AND y > ?) OR id = ?');
+/*console.log('(x < ? AND y > ?) OR id = ?');
 var result = (require('../sqlexpr.js').parse('(x < ? AND y > ?) OR id = ?'));
 
 var log = function(r, ind) {
@@ -26,16 +26,20 @@ var log = function(r, ind) {
     } else {
         console.log(indent + r);
     }
-}
+}*/
 
-require('worm').connect('pg', {
+require('worm')('pg', {
     host : '/var/run/postgresql',
     database: 'kwarque'
-}, function(worm) {
-    worm.select('fragments', {
-        id:1, x:1, y:1
-    }).where('(x < ? AND y > ?) OR id = ?', [
-        12, 13, 14
-    ]).limit(10, 12).find(function(err, result) {
-    })
+}, function(err, worm) {
+    if (err) {
+        console.log(err)
+    } else {
+        var q = worm('fragment', {
+            id:1, x:1, y:1
+        }).select(function(err, result) {
+            if (err) console.log(err);
+            console.log(result);
+        });
+    }
 })
