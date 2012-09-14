@@ -60,7 +60,8 @@ require('worm')('pg', {
                     }
                 },
                 "fkeys" : {
-                    "fragment_owner_fkey1" : { 
+                    "alias234" : { 
+                        "name" : "fragment_owner_fkey1",
                         "columns" : [ 'owner' ],
                         "foreign_schema" : 'public',
                         "foreign_table" : 'account',
@@ -82,6 +83,12 @@ require('worm')('pg', {
                         "type" : 'VARCHAR',
                         "length" : 63
                     }
+                },
+                "lkeys" : {
+                    "alias234" : {
+                        "schema" : "public",
+                        "table" : "fragment"
+                    }
                 }
             }
         }
@@ -90,7 +97,7 @@ require('worm')('pg', {
     if (err) {
         console.log(err)
     } else {
-        worm('fragment', {
+        worm({
             id:1,
             xz: worm.rename("x", worm.transform(function(x) {return x + 1;}, function(x) {return x - 1;})),
             // chaining: ???
@@ -101,15 +108,15 @@ require('worm')('pg', {
             sum: "x + y", // String is interpreted as SQL expression.
             fragment_owner_fkey1 : worm.flatten({ // flatten pushes all properties to parent object
                 owner: worm.rename('account'),    // rename changes name of property (original name is given as arg, so that same property can be rerefered to multiple times)
-                fragments : worm.many("fragment.fragment_owner_fkey1", { // many denounces one-to-many relationship where first argument gives qualified name of fkey; result is array of objects
+                fragments : worm.many("fragment_owner_fkey1", { // many denounces one-to-many relationship where first argument gives qualified name of fkey; result is array of objects
                     title:1,
                     text:1
                 }),
-                related : worm.enumerate(["fragment", "fragment_owner_fkey1"], "id"), // enumerate is same as many, but only one attribute is retrieved and a flat array (without nested objects) is created
+                related : worm.enumerate("fragment_owner_fkey1", "id"), // enumerate is same as many, but only one attribute is retrieved and a flat array (without nested objects) is created
                 x : worm.one(), // maybe get first of many objects
                 y : worm.aggregate() // do sth with many objects, creating one
             })
-        }).where("(x != 50) AND (x = y)").select(function(err, result) {
+        }).bind(structure, 'fragment').where("(x != 50) AND (x = y)").select(driver, function(err, result) {
             if (err) {
                 console.log(err);
             } else {
