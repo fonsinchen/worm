@@ -60,8 +60,7 @@ require('worm')('pg', {
                     }
                 },
                 "fkeys" : {
-                    "alias234" : { 
-                        "name" : "fragment_owner_fkey1",
+                    "fragment_owner_fkey1" : { 
                         "columns" : [ 'owner' ],
                         "foreign_schema" : 'public',
                         "foreign_table" : 'account',
@@ -87,7 +86,8 @@ require('worm')('pg', {
                 "lkeys" : {
                     "alias234" : {
                         "schema" : "public",
-                        "table" : "fragment"
+                        "table" : "fragment",
+                        "name" : "fragment_owner_fkey1"
                     }
                 }
             }
@@ -108,11 +108,11 @@ require('worm')('pg', {
             sum: "x + y", // String is interpreted as SQL expression.
             fragment_owner_fkey1 : worm.flatten({ // flatten pushes all properties to parent object
                 owner: worm.rename('account'),    // rename changes name of property (original name is given as arg, so that same property can be rerefered to multiple times)
-                fragments : worm.many("fragment_owner_fkey1", { // many denounces one-to-many relationship where first argument gives qualified name of fkey; result is array of objects
+                fragments : worm.many("alias234", { // many denounces one-to-many relationship where first argument gives qualified name of fkey; result is array of objects
                     title:1,
                     text:1
                 }),
-                related : worm.enumerate("fragment_owner_fkey1", "id"), // enumerate is same as many, but only one attribute is retrieved and a flat array (without nested objects) is created
+                related : worm.enumerate("alias234", "id"), // enumerate is same as many, but only one attribute is retrieved and a flat array (without nested objects) is created
                 x : worm.one(), // maybe get first of many objects
                 y : worm.aggregate() // do sth with many objects, creating one
             })
