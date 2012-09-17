@@ -47,7 +47,8 @@ var model = {
             "columns" : {
                 "id" : {
                     "type" : 'INTEGER',
-                    "pkey" : true
+                    "pkey" : true,
+                    "auto" : true // automatically generated, don't try to insert or update
                 },
                 "x" : 'INTEGER',
                 "y" : 'INTEGER',
