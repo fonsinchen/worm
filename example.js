@@ -35,10 +35,10 @@ var driver = worm.driver('pg', {
     database: 'kwarque'
 });
 
-var structure = {
+var model = {
     // other possibilities:
     // - anonymous default schema: assign the description to 0
-    // - no schema support: just assign single schema to structure and drop additional layer (0 property will be undefined)
+    // - no schema support: just assign single schema to model and drop additional layer (0 property will be undefined)
     // - no default schema: leave out the 0
     // point is: there cannot be any schema called 0 in the DB as they have to have string names...
     0 : "public",
@@ -117,7 +117,7 @@ worm.describe({
         x : t.one(), // maybe get first of many objects
         y : t.aggregate() // do sth with many objects, creating one
     })
-}).bind(structure, 'fragment').where("(x != 50) AND (x = y)").render(driver).insert(stuff); // INSERT and UPDATE will be interesting ...
+}).bind(model, 'fragment').where("(x != 50) AND (x = y)").render(driver).insert(stuff); // INSERT and UPDATE will be interesting ...
 /*.select(function(err, result) {
     if (err) {
         console.log(err);
