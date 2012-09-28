@@ -30,10 +30,6 @@ var log = function(r, ind) {
 
 var worm = require('worm');
 var t = worm.transform;
-var driver = worm.driver('pg', {
-    host : '/var/run/postgresql',
-    database: 'kwarque'
-});
 
 var model = {
     // other possibilities:
@@ -65,7 +61,7 @@ var model = {
                 }
             },
             "fkeys" : {
-                "fragment_owner_fkey1" : { 
+                "fragment_owner_fkey1" : {
                     "columns" : [ 'owner' ],
                     "foreign_schema" : 'public',
                     "foreign_table" : 'account',
@@ -99,6 +95,11 @@ var model = {
     }
 };
 
+var driver = worm.drive('pg', {
+  host : '/var/run/postgresql',
+  database: 'kwarque'
+});
+
 worm.describe({
     id:1,
     xz: t.rename("x", t.transform(function(x) {return x + 1;}, function(x) {return x - 1;})),
@@ -119,6 +120,8 @@ worm.describe({
         y : t.aggregate() // do sth with many objects, creating one
     })
 }).bind(model, 'fragment').where("(x != 50) AND (x = y)").render(driver).insert(stuff); // INSERT and UPDATE will be interesting ...
+
+
 /*.select(function(err, result) {
     if (err) {
         console.log(err);
@@ -130,9 +133,9 @@ worm.describe({
 /*
  * The basic principle has to be:
  * SELECT <column aliases> FROM <tables with joins> WHERE <where conditions> LIMIT <limit> OFFSET <offset>
- * 
+ *
  * DELETE <table aliases> FROM <tables with joins> WHERE <where conditions> LIMIT <limit> OFFSET <offset>
- * 
+ *
  * update can be done on multiple tables at once, but there is no mass update syntax, so ...
  * UPDATE <table> SET <column=val>* WHERE <pkey=val> for each object with pkey
  * Objects missing pkeys have to be ignored. We could use limit and offset clauses but that
@@ -142,7 +145,7 @@ worm.describe({
  * INSERT INTO <table> (<columns>) VALUES (<vals>)* for each table
  * However, for tables where we need the pkeys from the DB we should insert line by line and
  * check for the keys afterwards.
- * 
+ *
  * limit, offset and even where don't make much sense for update and insert. We
  * might warn about that. (Where could be used to prefilter the objects before
  * even handing them to the DB; we can evaluate SQL expressions after all ...)
