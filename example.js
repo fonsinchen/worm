@@ -63,9 +63,9 @@ var model = {
             "fkeys" : {
                 "fragment_owner_fkey1" : {
                     "columns" : [ 'owner' ],
-                    "foreign_schema" : 'public',
-                    "foreign_table" : 'account',
-                    "foreign_columns" : [ 'nick' ]
+                    "schema" : 'public',
+                    "table" : 'account',
+                    "columns" : [ 'nick' ]
                 }
             }
         },
@@ -111,13 +111,13 @@ worm.describe({
     sum: "x + y", // String is interpreted as SQL expression.
     fragment_owner_fkey1 : t.flatten({ // flatten pushes all properties to parent object
         owner: t.rename('account'),    // rename changes name of property (original name is given as arg, so that same property can be rerefered to multiple times)
-        fragments : t.many("alias234", { // many denounces one-to-many relationship where first argument gives qualified name of fkey; result is array of objects
+        alias234 : t.many({ // many denounces one-to-many relationship where first argument gives qualified name of fkey; result is array of objects
             title:1,
             text:1
         }),
-        related : t.enumerate("alias234", "id"), // enumerate is same as many, but only one attribute is retrieved and a flat array (without nested objects) is created
-        x : t.one(), // maybe get first of many objects
-        y : t.aggregate() // do sth with many objects, creating one
+        related : t.rename("alias234", t.enumerate("id")) // enumerate is same as many, but only one attribute is retrieved and a flat array (without nested objects) is created
+        //x : t.one(), // maybe get first of many objects
+        //y : t.aggregate() // do sth with many objects, creating one
     })
 }).bind(model, 'fragment').where("(x != 50) AND (x = y)").render(driver).insert(stuff); // INSERT and UPDATE will be interesting ...
 
