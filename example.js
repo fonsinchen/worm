@@ -32,12 +32,7 @@ var worm = require('worm');
 var t = worm.transform;
 
 var model = {
-    // other possibilities:
-    // - anonymous default schema: assign the description to 0
-    // - no schema support: just assign single schema to model and drop additional layer (0 property will be undefined)
-    // - no default schema: leave out the 0
-    // point is: there cannot be any schema called 0 in the DB as they have to have string names...
-    0 : "public",
+    '' : "public",
     "public" : {
         "fragment" : {
             "columns" : {
@@ -102,13 +97,12 @@ var driver = worm.drive('pg', {
 
 worm.describe({
     id:1,
-    xz: t.rename("x", t.transform(function(x) {return x + 1;}, function(x) {return x - 1;})),
-    // chaining: ???
     // free form transformation: provide both ways to allow for either insert or retrieve
-    yobj: t.bloat({// opposite of flatten: creates an object {y: val} as property yobj of parent
+    xz: t.rename("x", t.transform(function(x) {return x + 1;}, function(x) {return x - 1;})),
+    yobj: t.bloat({ // opposite of flatten: creates an object {y: val} as property yobj of parent
         y:1
     }),
-    sum: "x + y", // String is interpreted as SQL expression.
+    sum: t.expr("x + y"), // String is interpreted as SQL expression.
     fragment_owner_fkey1 : t.flatten({ // flatten pushes all properties to parent object
         owner: t.rename('account'),    // rename changes name of property (original name is given as arg, so that same property can be rerefered to multiple times)
         alias234 : t.many({ // many denounces one-to-many relationship where first argument gives qualified name of fkey; result is array of objects
@@ -116,8 +110,6 @@ worm.describe({
             text:1
         }),
         related : t.rename("alias234", t.enumerate("id")) // enumerate is same as many, but only one attribute is retrieved and a flat array (without nested objects) is created
-        //x : t.one(), // maybe get first of many objects
-        //y : t.aggregate() // do sth with many objects, creating one
     })
 }).bind(model, 'fragment').where("(x != 50) AND (x = y)").render(driver).insert(stuff); // INSERT and UPDATE will be interesting ...
 
