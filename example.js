@@ -57,10 +57,10 @@ var model = {
             },
             "fkeys" : {
                 "fragment_owner_fkey1" : {
-                    "columns" : [ 'owner' ],
+                    "local" : [ 'owner' ],
                     "schema" : 'public',
                     "table" : 'account',
-                    "columns" : [ 'nick' ]
+                    "foreign" : [ 'nick' ]
                 }
             }
         },
@@ -102,25 +102,20 @@ worm.describe({
     yobj: t.bloat({ // opposite of flatten: creates an object {y: val} as property yobj of parent
         y:1
     }),
-    sum: t.expr("x + y"), // String is interpreted as SQL expression.
+    sum: t.expr('"fragment".x + "fragment".y'), // String is interpreted as SQL expression.
     fragment_owner_fkey1 : t.flatten({ // flatten pushes all properties to parent object
-        owner: t.rename('account'),    // rename changes name of property (original name is given as arg, so that same property can be rerefered to multiple times)
+        account: t.rename('nick'),    // rename changes name of property (original name is given as arg, so that same property can be rerefered to multiple times)
         alias234 : t.many({ // many denounces one-to-many relationship where first argument gives qualified name of fkey; result is array of objects
             title:1,
             text:1
         }),
         related : t.rename("alias234", t.enumerate("id")) // enumerate is same as many, but only one attribute is retrieved and a flat array (without nested objects) is created
     })
-}).bind(model, 'fragment').where("(x != 50) AND (x = y)").render(driver).insert(stuff); // INSERT and UPDATE will be interesting ...
-
-
-/*.select(function(err, result) {
-    if (err) {
-        console.log(err);
-    } else {
-        console.log(result);
-    }
-});*/
+}).bind(model, 'fragment').where("fragment.x != 50").render(driver).select([], function(item) {
+    console.log(item);
+}, function(err) {
+    if (err) console.log(err);
+});
 
 /*
  * The basic principle has to be:
