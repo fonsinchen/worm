@@ -111,7 +111,7 @@ worm.describe({
         }),
         related : t.rename("alias234", t.enumerate("id")) // enumerate is same as many, but only one attribute is retrieved and a flat array (without nested objects) is created
     })
-}).bind(model, 'fragment').where("fragment.x != 50").render(driver).select([], function(item) {
+}).bind(model, 'fragment').where("fragment.x != ?").render(driver).select([50], function(item) {
     console.log(item);
 }, function(err) {
     if (err) console.log(err);
