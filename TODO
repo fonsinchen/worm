@@ -1,0 +1,45 @@
+"lazy loading"
+--------------
+
+Sometimes we get huge unmanageable joins or we want to limit and join at the
+same time. This means we have to select from different tables with separate
+statements. Real lazy loading would be against the spirit of worm. We want to
+load everything that is specified and return pure data. So this must be split in
+two parts:
+
+1. A way to split the SQL statements while still maintaining the same external
+interface. Transformations need a way to hook into the extraction process delay
+the delivery of data until they've loaded possible subobjects.
+
+2. A way to specify "load this descriptor on top of that collection" where the
+collection is governed by a different descriptor and may be deeply nested.
+Sort of like "populateRelation" in propel but more general. A method "into" as
+alternative to "where" may be useful.
+
+Inserting data
+--------------
+
+For inserting data we have to do separate statements for each join "layer". Each
+layer needs the primary keys (or other join columns) from the previous one. The
+problems here are:
+
+1. How do we get the last inserted ids in a portable way (how does e.g. propel
+do that anyway?). It might be OK not to support mass inserts for now. Then we
+can use LAST_INSERT_ID() on mysql and RETURNING id on postgresql.
+
+2. How to handle nonstandard joins? Actually the subtable may be joined on
+something else than its primary key. Probably we should prohibit nonstandard join
+conditions altogether and require people to write that stuff in where conditions.
+
+Deleting
+--------
+
+Deletion also needs to occur per table. At least postgresql doesn't support joined
+delete.
+
+What is actually needed is a general event system that tells the parent
+table when all operations on some object in the child table are finished. When
+the parent table has finished its own actions and all child objects have
+finished theirs then it can pass the event on to its own parent.
+Like this we can handle multi-statement insert/select/update/delete all in the
+same way.
