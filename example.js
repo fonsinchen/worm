@@ -45,7 +45,8 @@ var model = {
                 "y" : 'INTEGER',
                 "title": {
                     "type" : 'VARCHAR',
-                    "length" : 63
+                    "length" : 63,
+                    "default" : "sometitle"
                 },
                 "text" : 'TEXT',
                 "time" : 'TIMESTAMP',
@@ -68,7 +69,8 @@ var model = {
             "columns" : {
                 "id": {
                     "type": 'INTEGER',
-                    "pkey": true
+                    "pkey": true,
+                    "auto": true
                 },
                 "nick" : {
                     "type": 'VARCHAR',
