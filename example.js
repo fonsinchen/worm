@@ -97,7 +97,7 @@ var driver = worm.drive('pg', {
   database: 'kwarque'
 });
 
-worm.describe({
+var port = worm.describe({
     id:1,
     // free form transformation: provide both ways to allow for either insert or retrieve
     xz: t.rename("x", t.transform(function(x) {return x + 1;}, function(x) {return x - 1;})),
@@ -113,8 +113,10 @@ worm.describe({
         }),
         related : t.rename("alias234", t.enumerate("id")) // enumerate is same as many, but only one attribute is retrieved and a flat array (without nested objects) is created
     })
-}).bind(model, 'fragment').where("fragment.x != ?").render(driver).select([50], function(item) {
-    console.log(item);
+}).bind(model, 'fragment').where("fragment.x != ?").render(driver);
+
+port.select([50], function(item) {
+    port.insert(item);
 }, function(err) {
     if (err) console.log(err);
 });
