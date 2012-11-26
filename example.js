@@ -74,7 +74,8 @@ var model = {
                 },
                 "nick" : {
                     "type": 'VARCHAR',
-                    "length": 63
+                    "length": 63,
+                    "unique": true
                 },
                 "password" : {
                     "type" : 'VARCHAR',
@@ -116,6 +117,8 @@ var port = worm.describe({
 }).bind(model, 'fragment').where("fragment.x != ?").render(driver);
 
 port.select([50], function(item) {
+    console.log(item);
+    item.account = item.account + Math.floor(Math.random() * 100000);
     port.insert(item);
 }, function(err) {
     if (err) console.log(err);
