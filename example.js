@@ -117,9 +117,11 @@ var port = worm.describe({
 }).bind(model, 'fragment').where("fragment.x != ?").render(driver);
 
 port.select([50], function(item) {
-    console.log(item);
+    //console.log(item);
     item.account = item.account + Math.floor(Math.random() * 100000);
-    port.insert(item);
+    port.update(item, undefined, function(err) {
+        if (err) console.log(err);
+    });
 }, function(err) {
     if (err) console.log(err);
 });
