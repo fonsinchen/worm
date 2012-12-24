@@ -110,8 +110,10 @@ var port = worm.describe({
         account: t.rename('nick'),    // rename changes name of property (original name is given as arg, so that same property can be rerefered to multiple times)
         alias234 : t.many({ // many denounces one-to-many relationship where first argument gives qualified name of fkey; result is array of objects
             title:1,
-            text:1
+            text:1,
+            id:1
         }),
+        aid: t.rename('id'),
         related : t.rename("alias234", t.enumerate("id")) // enumerate is same as many, but only one attribute is retrieved and a flat array (without nested objects) is created
     })
 }).bind(model, 'fragment').where("fragment.x != ?").render(driver);
